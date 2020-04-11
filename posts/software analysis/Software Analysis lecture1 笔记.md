@@ -10,7 +10,7 @@ Programming Language这个领域关心的问题大致可以分成三个部分：
 
 3. application：这个部分关注在运行前能对程序代码进行的一些工作，例如错误检测，代码优化等等，IDE里面就大量应用了SA的成果，如变量未定义的错误提示，循环中的不变量表达式的移出优化；程序的静态验证（或者叫程序证明），程序合成等等
 
-主要用的技术有抽象解释（Abstract interpretation），数据流分析（Data-flow analysis, ），Hoare logic，Model checking，Symbolic execution等等，本课程只会讲到其中的两个，分别是数据流分析和抽象解释，重点讲的是数据流分析。
+主要用的技术有抽象解释（Abstract interpretation），数据流分析（Data-flow analysis），Hoare logic，Model checking，Symbolic execution等等，本课程只会讲到其中的两个，分别是数据流分析和抽象解释，重点讲的是数据流分析。
 
 那么什么样的SA是完美的呢？定义是既overapproximate又underapproximate的SA是完美的。overapproximate也叫sound，underapproximate也叫complete，他们之间的关系可以用一个图很好的表示
 ![](2020-04-07003328.jpg)
@@ -36,7 +36,7 @@ if (input) {
 1. $$x \in \\{0, 1\\}$$
 2. x = 1 when input == true, x = 0 when input == false
 
-可以看出第二种的精度更高一些，因为报告中包含了x具体情况下的取值，但是这种方式也要求分析过程维护上下文信息，从而提高了分析的代价，而静态分析的目标应该是在确保（或尽量接近）sound的前提下在精度和速度上做一个平衡，试想一下IDE在你写下使用一个未初始变量的代码后二十秒后才给出提示，做静态分析要把握住精度的控制，不然极端情况下岂不是要把静态分析往解释器的方向写了吗？
+可以看出第二种的精度更高一些，因为报告中包含了x具体情况下的取值，但是这种方式也要求分析过程维护上下文信息，从而提高了分析的代价，而静态分析的目标应该是在确保（或尽量接近）sound的前提下在精度和速度上做一个平衡，试想一下IDE在你写下使用一个未初始化变量的代码后二十秒后才给出提示，做静态分析要把握住精度的控制，不然极端情况下岂不是要把静态分析往解释器的方向写了吗？
 
 完美的SA等价于false positive =$$ \emptyset $$ 且 false negative = $$ \emptyset $$，既sound又complete。而课上讲过一个大米定理（Rice Theorem），意思是说这个世界上没有完美的SA，这个定理和deep learning领域的universal approximation theorem一般，让人觉得很没意思。
 
