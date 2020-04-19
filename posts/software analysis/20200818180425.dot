@@ -1,0 +1,14 @@
+digraph {
+	node[shape=box]
+	s1[label="1: x = 1"]
+	s2[label="2: y = 2"]
+	s3[label="3: e = 0"]
+	s4[label="4: if e > 10 goto 7"]
+	s5[label="5: e = y + x"]
+	s6[label="6: x = x + 1 goto 4"]
+	s7[label="7: y = x "]
+	rankdir = TB
+	s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7
+	s4 -> s7
+	s6 -> s4
+}
