@@ -1,0 +1,9 @@
+digraph{
+	node[shape=box]
+	edge[fontsize=9]	
+	try_block -> finally_block[label="normally"]
+	try_block -> catch_block[label="abruptly"]
+	catch_block:e -> finally_block:w[label="normally"]
+	catch_block:s -> finally_block:s[label="abruptly"] 
+	{rank=same; catch_block; finally_block}
+}

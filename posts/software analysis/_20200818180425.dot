@@ -1,0 +1,39 @@
+digraph {
+	node[shape=box]
+
+	splines=false
+
+	s1[label="1: x = 1"]
+	s2[label="2: y = 2"]
+	s3[label="3: e = 0"]
+
+	s4[label="4: if e > 10 goto 7"]
+	{rank=same; s4; s4_left_help; s4_right_help}
+	s4_left_help[color=white, label=""]
+	s4_right_help[color=white, label=""]
+
+	s5[label="5: e = y + x"]
+
+	s6[label="6: x = x + 1 goto 4"]
+	{rank=same; s6; s6_left_help}
+	s6_left_help[color=white, label=""]
+
+	s7[label="7: y = x "]
+	{rank=same; s7; s7_left_help; s7_right_help}
+	s7_left_help[color=white, label=""]
+	s7_right_help[color=white, label="   "]	
+
+	rankdir = TB
+
+	s1 -> s2 -> s3 -> s4 -> s5 -> s6 -> s7
+
+	s4_left_help:e -> s6_left_help:e[arrowhead = none]
+	s6_left_help:e -> s6:w[arrowhead = none]
+	s4_left_help:e -> s4:w
+	
+	s6_left_help:s -> s7_left_help:n[style=invis]
+	s7_left_help:e -> s7:w[style=invis]
+	s7:e -> s7_right_help:w[arrowhead=none]
+	s7_right_help:w -> s4_right_help:w[arrowhead=none]
+	s4 -> s4_right_help[dir=back]
+}
