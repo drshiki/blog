@@ -1,21 +1,23 @@
-在网上有一段流传甚广的Java代码，用来解释带finally块的异常控制流，甚至很多人不惜拿出字节码来一一解读，仿佛所有的答案都在这紧凑的十六进制指令间，殊不知他们的理解多半是偏离了方向，首先明确某个问题是Java问题还是JVM问题，这个很重要，因为从两个层面去论述某个现象的时候得到的结果往往是大相径庭的。来看看这段代码以及将要思考的几个问题。
+在网上有一段流传甚广的Java代码，用来解释带finally块的异常控制流，甚至很多人不惜拿出字节码来一一解读，仿佛所有的答案都在这紧凑的十六进制指令间，殊不知他们这种做法完全偏离了方向。
+
+首先明确这个问题到底是Java的问题还是JVM的问题，先搞清楚这个很重要，因为从两个层面去论述某个现象的时候得到的结果往往是大相径庭的。来看看这段代码以及将要思考的几个问题。
 
 ```
-    public int test() {
-        int x;
-        try {
-            x = 1;
-            return x;
-        } catch (Exception e) {
-            x = 2;
-            return x;
-        } finally {
-            x = 3;
-        }
+public int test() {
+    int x;
+    try {
+        x = 1;
+        return x;
+    } catch (Exception e) {
+        x = 2;
+        return x;
+    } finally {
+        x = 3;
     }
+}
 ```
 
-这段代码的返回值是什么呢？对于这样的一个问题，首先要思考的是，这段代码对应的控制流图到底是什么样的？细想一下finally的作用，如果你是Java的设计者，这个finally按照设计者想要的样子到底会是怎么样的，其实不难分析，这代码由三个块组成，分别对每个块分析可以很容易得出：
+这段代码的返回值是什么呢？对于这样的一个问题，首先要思考的是，这段代码对应的控制流图到底是什么样的？细想一下finally的作用，如果你是Java的设计者，想要的finally控制流到底会是怎么样的。其实也不难分析，可以使用CS101就强调的逐步分解的思想，将这代码分成三个部分，分别对应着三个块（block），对每个块分析可以很容易得出：
 
 **try块**
 
@@ -34,6 +36,8 @@ try块发生异常时：try块 -> catch块
 catch块顺利走完时：catch块 -> finally块
 
 catch块发生异常/错误时：catch块 -> finally块
+
+由此可知道从try出来的时候有三个出口，分别流向catch（抛Exception异常），流向catch（抛出非Exception的Throwable）和流向finally，而从catch出来的时候两个出口都流向（正常执行和异常执行）finally。
 
 **finally块**
 
@@ -106,18 +110,27 @@ finally块的无论发生异常/错误，或者正常走完，都不会再执行
           stack = [ class java/lang/Throwable ]
 ```
 
-可以看出这份字节码确实实现了Java的语法功能，
+可以看出这份字节码居然是首先计算了return后面的表达式，然后保存了这个计算结果在slot2里面，finally块使用的依旧是旧的slot1里面的x，所以修改自然不会影响到slot2的x，这样确实实现了Java的语法功能。
 
-而由于整体复制了try块中的变量给finally使用，所以其上的数据流图如下：
-
-
-
-到这里已经算得到了这个问题的答案，sun只是恰好选择了使用**复制finally代码到每一个块的出口处，然后使用类似函数传参的方式给finally块传递参数这样的使用方式去实现Java的语法而已**，然而还有几个问题值得思考：
+到这里已经算得到了这个问题的答案，sun只是恰好选择了使用**复制finally代码到每一个块的出口处，然后先计算return语句中的表达式，暂存结果，然后执行finally代码**，然而还有几个问题值得思考：
 
 1. try-catch-finally这段Oracle JVM字节码还原回来的Java代码应该是怎么样的呢？
 
-2. Java的finally实现必须这么设计吗？
+可以想到对应上面的try的一个流程是这样的
+
+```
+try块的代码（不包含return语句）
+tmp = return语句中的表达式
+finally块代码
+return tmp
+```
+
+2. Java的finally实现必须这么设计吗，这样设置有什么好处？
 
 3. 还有没有什么更好的其他实现方式呢？
 
 4. Java层面的语法能否改的更加直观一些呢？
+
+references:
+
+[1] The Java Language Specification Java SE 8 Edition-14.20.2
