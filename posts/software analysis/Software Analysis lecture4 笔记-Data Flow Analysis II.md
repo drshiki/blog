@@ -31,19 +31,19 @@ s5: a = b + c       OUT[s5]
 
 如果还不明白，可以继续看下面的具体的分析过程。
 
-第一步依旧是数据的抽象，只对关注的数据作抽象，这里关注的是变量的赋值，例如程序中额100个变量v1 v2 v3 ... v100，在程序上的每一点这100个变量的状态是live或者dead用1和0来表示，所以每个程序点上的状态可以用100bit的向量来表示
+第一步依旧是数据的抽象，只对关注的数据作抽象，这里关注的是变量的赋值，例如程序中的100个变量v1 v2 v3 ... v100，在程序上的每一点这100个变量的状态是live或者dead用1和0来表示，所以每个程序点上的状态可以用100bit的向量来表示
 
 ```
 000000000000...00
-|____       ____|
-     100 bit
+|____        ___|
+     100 bits
 ```
 
 可以容易观察到，这个分析使用backward分析更方便。
 
-因为采用了backward分析，所以对于数据流分析的流向是从exit往entry，对于所有B的后继s，做over-approximate的时候有
+因为采用了backward分析，所以对于数据流分析的流向是从exit往entry，对于B的所有后继s，做over-approximate的时候有
 
-$$ OUT[B] = \bigunion_{i=1}^n IN[s_i] $$
+$$ OUT[B] = \bigcup_{i=1}^n IN[s_i] $$
 
 ![](20200505202504.jpg)
 
@@ -53,7 +53,7 @@ $$ OUT[B] = \bigunion_{i=1}^n IN[s_i] $$
 
 总结B和IN[B]可以写出其中的一种转换函数形式为
 
-$$ IN[B] = USE_B \union (OUT[B] - def_B) $$
+$$ IN[B] = USE_B \cup (OUT[B] - def_B) $$
 
 顺便提一下，静态分析中的很多转换函数都是generate和kill这种pattern的。
 
@@ -80,3 +80,7 @@ may analysis的块初始化一般使用“空”（bottom），而must analysis�
 
 ![](20200505211545.jpg)
 ### Available Expressions Analysis
+
+references:
+
+[[1] https://www.bilibili.com/video/BV19741197zA](https://www.bilibili.com/video/BV19741197zA)
