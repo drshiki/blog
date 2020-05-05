@@ -1,4 +1,4 @@
-# Software Analysis lecture1 笔记
+# Software Analysis lecture1 笔记-Introduction
 
 从这一篇开始我将会整理我的Software Analysis（Static Analysis）课程笔记放在博客上，这份笔记不会是课程完整内容的记录，而是会融入自己的一些理解和课程内容的补充，有什么理解不到位的或者错误的地方，可以联系我的Email指正，顺便一提，我最近开了这门课的课程群，欢迎对SA有兴趣或者在跟这门课的同学加入我们。
 
@@ -10,10 +10,12 @@ Programming Language这个领域关心的问题大致可以分成三个部分：
 
 3. application：这个部分关注在运行前能对程序代码进行的一些工作，例如错误检测，代码优化等等，IDE里面就大量应用了SA的成果，如变量未定义的错误提示，循环中的不变量表达式的移出优化；程序的静态验证（或者叫程序证明），程序合成等等
 
+而这门课的内容就属于application这一块，列举几个应用不同领域的应用例子，例如对于程序优化：编译时确定整型变量x的上界和下界，从而决定它的运行时表示，或者用值或者用引用；分析p和q指向数据在内存上是否不相交从而决定是否可以使用并行处理；在程序正确性检测上，IDE上几乎所有的警告或者错误检测都算是静态分析研究的成果；在信息处理领域呢例如程序是否隐私泄露；以及日渐增长的在并发系统上的分析死锁和资源竞争等。静态分析程序可以说是一个以程序T为输入，回答T是否满足某种特定的性质的程序，就好像Dijkstra说的，尽管静态分析只能用来证明程序有bug不能证明程序没有bug，但静态分析仍然是十分实用的。
+
 主要用的技术有抽象解释（Abstract interpretation），数据流分析（Data-flow analysis），Hoare logic，Model checking，Symbolic execution等等，本课程只会讲到其中的两个，分别是数据流分析和抽象解释，重点讲的是数据流分析。
 
 那么什么样的SA是完美的呢？定义是既overapproximate又underapproximate的SA是完美的。overapproximate也叫sound，underapproximate也叫complete，他们之间的关系可以用一个图很好的表示
-![](2020-04-07003328.jpg)
+![](20200407003328.jpg)
 
 complete表示报告包含的错误都是真实的错误，但可能并未包含全部的错误，造成了漏报，
 $$! actualReported \subseteq true $$

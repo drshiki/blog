@@ -73,7 +73,7 @@ for (each basick block B\entry) // 除entry外的所有基本块
         for (each basic block B\entry) { // 除entry外的所有基本块
             P = predecessor of B // 得到B的所有前驱
             IN[B] = for (each basic block P) { union OUT[P] } // B所有前驱的OUT做集合并的得到IN[B]
-            OUT[B] = gen(B) union (IN[B] + kill(B)) // 基本块生成的定义 并上 B的输入状态减去B终结了的定义 得到OUT[B]
+            OUT[B] = gen(B) union (IN[B] - kill(B)) // 基本块生成的定义 并上 B的输入状态减去B终结了的定义 得到OUT[B]
         }
     }
 ```

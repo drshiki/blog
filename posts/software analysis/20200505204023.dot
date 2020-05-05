@@ -1,0 +1,6 @@
+digraph {
+	table[shape=Mrecord, label="
+	{ B | k=n | k=v | v=2 | v=v-1 | v=2\nk=v | k=v\nv=2 }
+	|
+	{ IN[B] | \{v\} | \{v\} | \{\} | \{v\} | \n\{\}\n | \n\{v\}\n }"] 
+}

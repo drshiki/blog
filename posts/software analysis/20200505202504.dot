@@ -1,0 +1,18 @@
+digraph {
+	splines = false
+	node[shape = box]
+	p[label = "v = 3", xlabel = "p"]
+	B[label = " ? ", xlabel = "B"]
+	s1[label = "... = v", xlabel = "s1"]
+	s2[label = "...", xlabel = "s2"]
+		
+	p -> B[label = "IN[B] = ?"]
+	B -> s2[label = "OUT[B] = {v}"]
+	B -> s1
+	
+	{rank = same; data_flow_direction_start_point; s1; s2}
+	{rank= same; data_flow_direction_end_point; p}
+	data_flow_direction_start_point[shape = point, style = "invis"]
+	data_flow_direction_end_point[shape = point, style = "invis"]
+	data_flow_direction_start_point -> data_flow_direction_end_point[label="data flow analysis direction"]
+}
