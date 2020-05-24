@@ -1,0 +1,15 @@
+digraph{
+  label = "w表示write，d表示disk，m表示memory\n w_d表示写磁盘，w_m表示写内存\n 例如w_d(f1)表示记录第1条'数据更新指令'到磁盘，w_m(x, v1)表示更新内存中的'x值'为v1";
+  labelloc = "t";
+
+  node [shape=plaintext]
+  edge [arrowhead=normal,arrowtail=curve]
+  {rank=same; "w_d(f1)"; "w_m(x, v1)"; "w_d(f2)"; "w_m(x, v2)" 
+  ; "...."; "w_d(f100)"; "w_m(x, v100)"}
+
+  {rank=same; "w_d(end)"; "w_d(x, v1)"; "..."; "w_d(x, v100)"}
+
+  "w_d(begin)" -> "w_d(f1)" -> "w_m(x, v1)" -> "w_d(f2)" -> "w_m(x, v2)" 
+  -> "...." -> "w_d(f100)" -> "w_m(x, v100)" -> "w_d(end)"
+  -> "w_d(x, v1)" -> "..." -> "w_d(x, v100)" 
+}
