@@ -67,15 +67,15 @@ $$! IN[B] = \ bigcup^{i=1}_n OUT[P_i] $$
 
 ```
 OUT[entry] = {} // 初始化入口的输出状态为空
-for (each basick block B\entry) // 除entry外的所有基本块
+for (each basic block B\entry) // 除entry外的所有基本块
     OUT[B] = {} // 初始化所有基本块的输出状态为空
-    while (changes to any OUT occur) { // 如果有基本快的输出对比前一次状态改变了即继续循环
-        for (each basic block B\entry) { // 除entry外的所有基本块
-            P = predecessor of B // 得到B的所有前驱
-            IN[B] = for (each basic block P) { union OUT[P] } // B所有前驱的OUT做集合并的得到IN[B]
-            OUT[B] = gen(B) union (IN[B] - kill(B)) // 基本块生成的定义 并上 B的输入状态减去B终结了的定义 得到OUT[B]
-        }
+while (changes to any OUT occur) { // 如果有基本快的输出对比前一次状态改变了即继续循环bash
+    for (each basic block B\entry) { // 除entry外的所有基本块
+        P = predecessor of B // 得到B的所有前驱
+        IN[B] = for (each basic block P) { union OUT[P] } // B所有前驱的OUT做集合并的得到IN[B]
+        OUT[B] = gen(B) union (IN[B] - kill(B)) // 基本块生成的定义 并上 B的输入状态减去B终结了的定义 得到OUT[B]
     }
+}
 ```
 
 算法描述可能会理解起来非常的不直观，首先通过一个小例子来说明一些算法的细节：

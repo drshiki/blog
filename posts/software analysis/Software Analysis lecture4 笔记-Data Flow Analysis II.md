@@ -63,13 +63,13 @@ $$ IN[B] = USE_B \cup (OUT[B] - def_B) $$
 IN[exit] = {} // 初始化出口的输入状态为空
 for (each basic block B\exit) // 除exit外的所有基本块
     IN[B] = {} // 初始化所有基本块的输入状态为空
-    while (changes to any IN occur) { // 如果有基本快的输入对比前一次状态改变了即继续循环
-        for (each basic block B\exit) { 除exit外的所有基本块
-            S = successor of B // 得到B的所有后继
-            OUT[B] = for (each basic block S) { union IN[S] } // B所有后继的IN做集合并的得到OUT[B]
-            IN[B] = use(B) union (OUT[B] - def(B)) // 基本块中使用的变量 并上 B的输出状态减去B中的重新赋值的变量 得到IN[B]
-        }
+while (changes to any IN occur) { // 如果有基本快的输入对比前一次状态改变了即继续循环
+    for (each basic block B\exit) { 除exit外的所有基本块
+        S = successor of B // 得到B的所有后继
+        OUT[B] = for (each basic block S) { union IN[S] } // B所有后继的IN做集合并的得到OUT[B]
+        IN[B] = use(B) union (OUT[B] - def(B)) // 基本块中使用的变量 并上 B的输出状态减去B中的重新赋值的变量 得到IN[B]
     }
+}
 ```
 
 may analysis的块初始化一般使用“空”（bottom），而must analysis的初始化一般使用“所有”（top），这个不明白不重要，下一课理论部分会讲到。
@@ -115,13 +115,13 @@ p是B的前驱。
 OUT[entry] = {} // 初始化入口的输出状态为空
 for (each basic block B\entry) // 除entry外的所有基本块
     OUT[B] = all // 初始化所有基本块的输出状态为“所有”，all表示所有表达式都为可用
-    while (changes to any OUT occur) { // 如果有基本快的输出对比前一次状态改变了即继续循环
-        for (each basic block B\entry) { 除entry外的所有基本块
-            P = predecessor of B // 得到B的所有前驱
-            IN[B] = for (each basic block P) { intersect OUT[P] } // B所有前驱的OUT做集合交的得到IN[B]
-            OUT[B] = gen(B) union (IN[B] - kill(B)) // 基本块生成的表达式 并上 B的输入状态减去B中的修改了值的变量的表达式 得到OUT[B]
-        }
+while (changes to any OUT occur) { // 如果有基本快的输出对比前一次状态改变了即继续循环
+    for (each basic block B\entry) { 除entry外的所有基本块
+        P = predecessor of B // 得到B的所有前驱
+        IN[B] = for (each basic block P) { intersect OUT[P] } // B所有前驱的OUT做集合交的得到IN[B]
+        OUT[B] = gen(B) union (IN[B] - kill(B)) // 基本块生成的表达式 并上 B的输入状态减去B中的修改了值的变量的表达式 得到OUT[B]
     }
+}
 ```
 附上一个课上一步一步分析的例子
 
