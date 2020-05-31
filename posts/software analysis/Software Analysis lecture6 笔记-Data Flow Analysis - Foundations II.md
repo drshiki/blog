@@ -19,7 +19,7 @@
 
 由前面的课程可知，迭代算法中的转换函数都为generate/kill这种形式的函数，而这种函数必定是单调的。证明如下：
 
-因为 $$ OUT[s] = IN[s] + gen_s - kill_s $$，又因为结点的 $$ gen_s $$ 和 $$ kill_s $$ 是不变的，所以可以合并成一个常量c，故有 $$ OUT[s] = IN[s] + c $$，又因为IN[s]上的每一位经过转换函数后变成OUT[s]，它上面的每一位只可能从0变成0或者1，从1变成1，不可能从1变成0，所以可知转换函数是单调的；
+因为 $$ OUT[s] = IN[s] + gen_s - kill_s $$，又因为结点的 $$ gen_s $$ 和 $$ kill_s $$ 是不变的，所以可以合并成一个常量c，故有 $$ OUT[s] = IN[s] + c $$，明显OUT[s]会随着IN[s]的增长而增长，可知转换函数是单调的；
 
 证明分支汇聚处的join是单调的，这里仅写出join的证明，meet的证明思路是一样的，证明如下：
 
@@ -50,5 +50,60 @@ QED
 ![](6/20200524182305.jpg)
 
 ## MOP
+
+前面讲到了静态分析的各种算法求解，但是还没说过到底这些解有多精确，关于分析这些解的精确度问题，先引入一个概念，MOP（Meet-Over-All-Path Solution），这个一个衡量精确度使用的一个概念，MOP的做法是先各自枚举程序的所有路径，每条路径独立的应用转换函数到达终点才做join/meet，不同于原先的课程中的做法在每一个分支汇聚的结点做join/meet，例如对下图的程序：
+
+![](6/20200530214514.jpg)
+
+![](6/20200530220145.jpg)
+
+原先的做法：$$ F(x \sqcup y) $$
+
+MOP：$$ F(x) \sqcup F(y) $$
+
+但是MOP是一种理想化的做法，因为如果程序包含循坏，那么MOP则无法到达exit，也就无法做join/meet操作，从而导致无法产生结果；另一个原因是容易发生分支指数爆炸。迭代算法的求解结果的精度总是小于或等于MOP精度的，证明：
+
+按照定义由：$$ x \le x \sqcup y, y \le x \sqcup y $$，又因为F是单调的，所以有 $$ F(x) \le F(x \sqcup y), F(y) \le F(x \sqcup y) $$，所以 $$ F(x \sqcup y) $$ 是 $$ F(x), F(y) $$ 的上界，又因为 $$ F(x) \sqcup F(y) $$ 是 $$ F(x), F(y) $$ 的最小上界，所以有 $$ F(x) \sqcup F(y) \le F(x \sqcup y) $$，所以可知迭代算法的结果在may analysis的格上比MOP的结果处于更高处，也就是更不精确，当且仅当 $$ \sqcup $$是一个满足分配律的运算时，迭代算法结果与MOP结果精度相等。前面课程讲到bit vector上的join/meet运算实际上是集合上的并与交，满足分配律。
+
+![](6/20200530222508.jpg)
+
+## 常量传播（Constant Propagation）
+
+下面讲一个求解过程不满足分配律的一个例子——常量传播，给定一个程序点p，变量x在该点是否确定指向一个常量，控制流的在每个结点的输出为二元组的集合 $$ \{(v_1, c_1), (v2, c2), ) ... (v_n, c_n)\} $$，v表示变量，c表示常量，其结点的格和meet运算定义如下：
+
+![](6/20200531015404.jpg)
+
+NDEF表示未定义，NAC表示不是常量（not a constant）
+
+meet运算定义：
+
+!$$ NAC \sqcap c = NAC $$
+!$$ UNDEF \sqcap c = c $$
+!$$ c \sqcap c = c $$
+!$$ c_1 \sqcap c_2 = NAC $$
+
+转换函数:
+
+如果s是x的一个赋值语句，$$ F:OUT[s] = gen \union (IN[s] - \{(x, _)\}) $$，如果s不是一个赋值语句，F则为一个恒等函数，也就是 $$ OUT[s] = IN[s] $$
+
+![](6/20200531020337.jpg)
+
+该分析算法不满足分配律的解释：
+
+![](6/20200531020555.jpg)
+
+## Worklist Algorithm
+
+该算法是迭代求解算法的一个改进版，回想前面的迭代算法，凡是有一个结点的OUT改变了。那就遍历所有结点，这其中有很多结点大多时候不用重新算，所以也就有了一个很简单粗暴的优化方向，因为只要IN没变，OUT就不会变，所以重新计算的时候只需要将那些IN改变了的结点重新算就行了。以下给出前向分析的代码描述，后向分析同理：
+
+![](6/20200531170900.jpg)
+
+references:
+
+[[1] https://www.bilibili.com/video/BV1964y1M7nL/?spm_id_from=333.788.videocard.0](https://www.bilibili.com/video/BV1964y1M7nL)
+
+[[2] http://www.cse.iitm.ac.in/~rupesh/teaching/pa/jan17/scribes/0-cp.pdf](http://www.cse.iitm.ac.in/~rupesh/teaching/pa/jan17/scribes/0-cp.pdf)
+
+[[3] https://www.cs.tufts.edu/comp/150AVS/06-data-flow.pdf](https://www.cs.tufts.edu/comp/150AVS/06-data-flow.pdf)
 
 
