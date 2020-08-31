@@ -165,3 +165,117 @@ private void expungeStaleEntries() {
 BigDecimal不推荐使用equals比较，因为equals会比较value和scale，推荐使用compareTo进行比较
 
 8. 
+Integer不推荐使用==比较，因为==只在Integer的值为-128-127的时候有效
+
+9. 
+HashMap，注意一下targetBinCount是指put值时候的目标桶的总数
+
+- targetBinCount > TREEIFY_THRESHOLD(8) && table.length < MIN_TREEIFY_CAPACITY(64) 扩容
+
+- targetBinCount <= TREEIFY_THRESHOLD(8) && table.length < MIN_TREEIFY_CAPACITY(64) 无特殊处理
+
+- targetBinCount > TREEIFY_THRESHOLD(8) && table.length >= MIN_TREEIFY_CAPACITY(64) 变红黑树
+
+- targetBinCount <= TREEIFY_THRESHOLD(8) && table.length >= MIN_TREEIFY_CAPACITY(64) 无特殊处理
+
+代码参考：
+```
+public class CustomKey {
+
+    public Object k;
+
+    public CustomKey(Object k) {
+        this.k = k;
+    }
+
+    // 确保在桶中遍历比较时能能找到对应的key
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof CustomKey) {
+            return k.equals(((CustomKey) obj).k);
+        }
+        return false;
+    }
+
+    // 保持hashCode一致，确保能int类型的key能放进一个桶，string类型能放进另一个桶
+    @Override
+    public int hashCode() {
+        if (k instanceof Integer) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+}
+// 测试代码
+HashMap<CustomKey, String> map = new HashMap<>(16, 0.75f);
+for (int i = 0; i < 9; i++) {
+    map.put(new CustomKey(i), "key"+i);
+}
+```
+参考链接：HashMap.putVal实现
+
+10.
+ Thread的interrupt()方法的作用会将将线程从sleep, wait, join等状态唤醒并抛出异常，但是仍然需要程序员自己写while去检测Thread.interrupted()的状态决定是否退出
+ 
+ Thread的interrupted()用于清除标识位，一般用于接收到中断设置后，线程选择持续执行的场景，所以需要清除标识位以便下一次检测能正常进行
+
+ 在InterruptedException被捕获后中断标识会自动被清除
+
+FutureTask.cancel和ThreadPoolExecutor.shutdownNow都是调用Thread的interrupt()方法
+
+ 代码参考：
+```
+    @Test
+    public void test() {
+        System.out.println("start running thread1");
+        long thread1StartTime = System.currentTimeMillis();
+        Thread t2 = new Thread(new Runnable() {
+
+            @Override
+            public void run() {
+                System.out.println("start running thread2");
+                long thread2StartTime = System.currentTimeMillis();
+                try {
+                    boolean entered = false;
+                    while ((System.currentTimeMillis() - thread2StartTime) / 1000 < 5) {
+                        long interval = (System.currentTimeMillis() - thread2StartTime) / 1000;
+                        if (!entered && interval == 3) {
+                            System.out.println("interrupt flag was true, interrupt=" + Thread.currentThread().isInterrupted());
+                            entered = true;
+                        }
+                    }
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.out.println("interrupt flag was cleared, interrupt=" + Thread.currentThread().isInterrupted());
+                    System.out.println("invoked in sleeping");
+                }
+                System.out.println("end running thread2");
+            }
+        });
+        t2.start();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        t2.interrupt();
+        t2.join();
+        long e = System.currentTimeMillis();
+        double v = (e - thread1StartTime) / 1000.0;
+        System.out.printf("end running thread1 after %f s", v);
+    }
+
+输出如下：
+start running thread1
+start running thread2
+interrupt flag was true, interrupt=true
+interrupt flag was cleared, interrupt=false
+invoked in sleeping
+end running thread2
+end running thread1 after 5.001000 s
+Process finished with exit code 0
+```
+
+ 参考链接：https://www.zhihu.com/question/41048032 @ntopass的回答
+
