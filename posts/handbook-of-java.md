@@ -224,7 +224,7 @@ for (int i = 0; i < 9; i++) {
 
 FutureTask.cancel和ThreadPoolExecutor.shutdownNow都是调用Thread的interrupt()方法
 
- 代码参考：
+代码参考：
 ```
     @Test
     public void test() {
@@ -279,3 +279,63 @@ Process finished with exit code 0
 
  参考链接：https://www.zhihu.com/question/41048032 @ntopass的回答
 
+11. 
+同步异步是一种通信方式的分类方法，主要区别在于消息接收者是如何获知消息的，如果接收者要主动去获取消息的就是同步，如果是发送者通知或者拉起接收者那么就是异步，典型场景例如函数f调用函数g，f一直在调用点原地等待g的返回值，这个f一直在轮询这个点是不是有东西返回了，这个就是同步
+
+12. 
+volatile提供了一个轻量的同步机制的意思是，volatile变量可以作为某种标识，让关心的人（接收者）不断查询这个变量的状态来决定下一步干什么，比较适合用用来做控制型变量
+
+- volatile适用于那种单一修改线程，多读取线程的场景
+- 运算不依赖于volatile修饰的前值
+
+13. 
+Java的 AS IF 语义确保了线程内表现为i串行（实际上是不是串行没有关系）
+
+14. 
+volatile禁止重排序的作用，禁止重排序的实现是依靠内存屏障实现的，通过在给volatile变量赋值指令后加入lock add 0， %esp，lock的语义即将所有cpu中的cache的变量回写到主存，并使得所有cache失效，故也可以推测使用volatile的频繁写会导致JVM插入大量的内存屏障从而使得缓存cache高频失效，性能降低，而读只要求读取时的操作必须是连续的load->use，并不会产生对其他cpu缓存的影响，所以性能消耗比较低
+
+代码参考：
+```
+public class DoubleCheckedLocking {                     //1
+	
+   private static Instance instance;                    //2
+	
+ 
+	
+   public static Instance getInstance() {               //3
+	
+       if (instance == null) {                          //4: 第一次检查
+	
+           synchronized (DoubleCheckedLocking.class) {  //5: 加锁
+	
+               if (instance == null)                    //6: 第二次检查
+	
+                   instance = new Instance();           //7: 问题的根源出在这里
+	
+           }                                            //8
+	
+       }                                                //9
+	
+       return instance;                                 //10
+	
+   }                                                    //11
+	
+}                                                       //12
+
+语句7进一步可以展开为以下过程
+
+memory = allocate();   //7.1：分配对象的内存空间
+	
+ctorInstance(memory);  //7.2：初始化对象
+	
+instance = memory;     //7.3：设置 instance 指向刚分配的内存地址
+```
+错误时序：
+
+- 线程1：执行完7.3，尚未执行7.2
+- 线程2：执行4，发现instance不为空
+- 线程2：执行10
+
+此时返回了一个尚未初始化完成的对象
+
+参考链接：https://www.zhihu.com/question/56606703/answer/1446275583
