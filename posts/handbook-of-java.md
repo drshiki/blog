@@ -77,6 +77,38 @@ class LogToDbImpl implements LogToDb {
         logToFileImpl.log(log, "defaul.log");
     }
 }
+// 补充一个Java FutureTask的适配器例子
+public class FutureTask<V> implements RunnableFuture<V> {
+    // Callable 客户期待的接口
+    private Callable<V> callable;
+    // Runnable 原有的接口
+    public FutureTask(Runnable runnable, V result) {
+        this.callable = Executors.callable(runnable, result);
+        this.state = NEW;       // ensure visibility of callable
+    }
+}
+
+public class Executors {
+    public static <T> Callable<T> callable(Runnable task, T result) {
+        if (task == null)
+            throw new NullPointerException();
+        // 适配器，包装了原有的接口，返回一个客户期待的接口
+        return new RunnableAdapter<T>(task, result);
+    }
+}
+// 适配器
+static final class RunnableAdapter<T> implements Callable<T> {
+    final Runnable task;
+    final T result;
+    RunnableAdapter(Runnable task, T result) {
+        this.task = task;
+        this.result = result;
+    }
+    public T call() {
+        task.run();
+        return result;
+    }
+}
 ```
 参考链接：https://developer.ibm.com/zh/technologies/java/articles/j-lo-adapter-pattern/
 
@@ -339,3 +371,24 @@ instance = memory;     //7.3：设置 instance 指向刚分配的内存地址
 此时返回了一个尚未初始化完成的对象
 
 参考链接：https://www.zhihu.com/question/56606703/answer/1446275583
+
+15. 
+Java内存模型特性和语法支持
+
+| 语法/特性 | 原子性 | 可见性 | 有序性 |
+| ----- | ------ | ------ | ------ |
+| synchronized | √ | √ | √ |
+| volatile | | √ | √ |
+| final | | √ | |
+
+16. 
+并发所指的一段时间内多个任务被执行，并行是一个时间点上多个任务被执行，所以并行一定是并发，但是并发不一定是并行
+
+17. 
+HashMap的容量总是2的幂，如果设置的初始容量不是2的幂，那么将会转换成大于初始容量的最邻近的2的幂
+
+在保证n是2的幂的情况下，`(n - 1) & hash`可以实现取余运算。这个也是HashMap中用来定位桶的算法
+
+HashMap中的扰动函数`(key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16)`，避免只能取低位特征造成高冲突，无符号右移16位作自异或运算可以提取高位特征加大随机性，降低冲突
+
+参考链接：HashMap.tableSizeFor实现，HashMap.hash实现
