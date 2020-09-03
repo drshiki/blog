@@ -391,4 +391,56 @@ HashMap的容量总是2的幂，如果设置的初始容量不是2的幂，那�
 
 HashMap中的扰动函数`(key == null) ? 0 : (h = key.hashCode()) ^ (h >>> 16)`，避免只能取低位特征造成高冲突，无符号右移16位作自异或运算可以提取高位特征加大随机性，降低冲突
 
-参考链接：HashMap.tableSizeFor实现，HashMap.hash实现
+参考链接：HashMap.tableSizeFor实现，HashMap.hash实现，https://www.zhihu.com/question/20733617 @胖君的回答
+
+18. 
+使用ReentrantLock替代synchronized加锁，前者
+- 可实现公平锁（先到先获得锁，排队） new ReentrantLoc(true)
+- 可绑定多条件
+- 等待可中断 lock.tryLock(10, TimeUnit.SECONDS)
+
+synchronized仅仅具有可重入，非公平的特征
+
+19. 
+实现线程安全的办法：
+- 互斥同步，例如ReentrantLock，synchronize
+- 非阻塞同步，CAS，乐观锁
+- 无同步方案，如纯函数，ThreadLocal
+
+20. 
+自适应自旋锁是jvm默认开启的，目的是避免短时间内的锁切换导致频繁的线程恢复和操作系统内核态的切换，用忙循环去等待而不是休眠等待一个锁的释放
+
+21. 
+事务传播行为有7种，主要用于定义callee在一个已经开或未开事务中的caller中的行为，注意到其修饰的是callee：
+
+| 传播行为 | 是否使用事务 | 继续caller事务/新开事务 | 场景/备注 |
+| ----- | ------ | ------ | ------ |
+| REQUIRED | √ | √/√ | spring默认，callee发生异常，即使caller catch处理，caller的事务仍然会回滚 |
+| REQUIRES_NEW | √ | ×/√ | |
+| NESTED | √ | - | 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作，callee发生异常，caller catch处理，caller的事务会成功但callee事务会回滚 |
+| MANDATORY | √ | √/× | caller没开事务则抛出异常 |
+| SUPPORTS | √/× | √/× | |
+| NOT_SUPPORTED | × | ×/× | |
+| NEVER | × | ×/× | caller已开事务则抛出异常 |
+
+22. 
+MySQL的默认隔离级别为可重复读，Oracle，SqlServer中都是选择读已提交，spring默认隔离级别为default，随数据库隔离级别
+数据库隔离级别：
+| 隔离级别 | 脏读 | 可重复读 | 幻读 | 场景 |
+| ----- | ------ | ------ | ------ | ----- |
+| 读未提交 | √ | √ | √ | 用来做监控查看插入进度（debug）|
+| 读已提交 | × | √ | √ | |
+| 可重复读 | × | × | √ | |
+| 可串行化 | × | × | × ||
+可重复读于update而言，幻读于insert/delete而言
+
+23. 
+MySQL设置默认级别为可重复读而不是读已提交的原因是读已提交主从复制的底层机制依赖binlog的bug，但5.1后已修复此问题，会导致主从数据不一致
+解决办法是：
+1. 用可重复读
+2. 使用row格式的binlog复制
+
+参考链接：https://www.cnblogs.com/rjzheng/p/10510174.html
+
+24. 
+可重复读锁太多，会将其他事务的修改block住，条件列未命中索引可重复读会锁表，读已提交只会锁行
