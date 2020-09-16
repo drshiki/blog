@@ -474,3 +474,27 @@ LinkedList在1.6的时候使用循环双向链表，1.7改成非循环的双向�
 1.7 的链表结构更清晰
 1.7 的数据结点不会有null冗余结点，1.6的header结点data域总是为null的
 1.6 采用头插addBefore(e, header)，1.7采用尾插linkLast(e)
+
+27. 
+ReentrantLock的公平锁和非公平锁的实现区别在于，前者来到时首先检查队列是否有排队线程，后者首先直接尝试获取锁，获取失败后二次尝试获取，失败后才入队
+
+参考NonfairSync和FairSync的lock方法实现
+
+桥接模式
+例如
+```
+interface Rule {
+    void dealData(DataContext dataContext);
+}
+class AmountRule implements Rule {}
+class QuantityRule implements Rule {}
+class ReportService {
+    Rule rule;
+    void generateReport(Rule rule, DataContext dataContext) {
+        rule.dealData(dataContext)
+    }
+}
+// 桥接,rule就好像是各个厂商的jdbc驱动，由他们各自实现
+new ReportService(new AmountRule(), d)
+new ReportService(new QuantityRule(), d)
+```
