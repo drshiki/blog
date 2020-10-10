@@ -498,3 +498,89 @@ class ReportService {
 new ReportService(new AmountRule(), d)
 new ReportService(new QuantityRule(), d)
 ```
+
+28. 
+redis对比zk，redis不适合做分布式锁，原因有如下
+
+
+
+- redlock算法问题
+- 需要轮询
+
+1. 客户端1在Redis的master节点上拿到了锁
+2. Master宕机了，存储锁的key还没有来得及同步到Slave上
+3. master故障，发生故障转移，slave节点升级为master节点
+4. 客户端2从新的Master获取到了对应同一个资源的锁
+
+于是，客户端1和客户端2同时持有了同一个资源的锁。锁的安全性被打破了。
+
+zookeeper适合做分布式锁，不适合做服务注册中心，redis不适合做分布式锁，kafka适合做高吞吐量的web场景，rabbitMQ适合做IM
+
+29. 
+有以下记录
+| id | value |
+| ----- | ------ |
+| 1  | 1 |
+
+| clientA | clientB | clientC |
+| ----- | ------ | ------ |
+| tx A begin|||
+| select value from table where id = 1 => 1 |||
+|| update table set value = value + 1 where id = 1 => value = 2 (单语句事务) ||
+| select value from table where id = 1 => 1 (可重复读，快照读) |||
+| update table set value = value + 1 where id = 1 => value = 3 (发生当前读，加行锁) </br> inodb 先读后改，读是 select 最新的 value = 2，基于2的值加1，利用当前读防止B的修改丢失 || tx C begin |
+||| update table set value = value + 1 where id = 1 => lock wait B事务加行锁防止C基于B（B最后可能回滚）的修改结果去update|
+| tx A commit |||
+||| updated => value = 4 |
+||| tx C commit |
+
+参考链接：https://juejin.im/post/6844904180440629262，https://www.cnblogs.com/yuzhuang/p/11585774.html
+
+30. 
+binlog是数据库层面的日志（无论用什么存储引擎都会有），有语句形式，行形式，混合形式，用于主从复制和数据恢复，性能攸关的参数为`sync_binlog`调节日志刷盘时机，取值范围0到N，0时由系统自己选择（不可靠），1为单事务commit时刷（最慢最安全），N表示每N个事务commit后刷（最快最不安全），1为mysql默认设置，大一些可能会发生数据丢失，但是可以提高性能
+
+redo，undo log是存储引擎层面的日志
+
+redo是页面更新的diff，是物理log
+
+undo log是数据库row的更新历史，是逻辑log，可以用来构造版本链
+
+statement-based binlog和read committed组合产生bug的原因
+
+| id | value |
+| ----- | ------ |
+| 1  | 1 |
+
+| clientA | clientB |
+| ----- | ------ |
+| tx A begin||
+|| tx B begin |
+| delete from table where id < 5 => 删掉了id=1的记录 ||
+|| insert into table value(2,1) => 插入一条id=2的记录 |
+|| tx B commit |
+| tx A commit ||
+在主库上`select * from table`查询结果为
+| id | value |
+| ----- | ------ |
+| 2  | 1 |
+在从库存上`select * from table`查询结果为空
+
+MySQL按事务提交的顺序而非每条语句的执行顺序来记录二进制日志，所以从库收到的binlog顺序是先插入后删除，而在主库上的顺序为先删除后插入
+
+31. 
+redlock算法过程
+
+1. 记录当前时间T1
+2. 分别在各个主redis上加锁
+3. 当在 >N/2 +1 个节点上加锁成功时，表示获取锁成功
+4. 获取时间T2， 重新计算锁的过期时间=原来锁的过期时间 -（T2-T1）
+
+补充说明，如果加锁失败需要及时释放锁，加锁超时应该设置远小于锁过期时间例如10s锁过期，50毫秒等待超时，不然造成等待锁过长，而已经持有的锁占用太久导致系统卡住，假设存在ABCDE五台机器，
+
+|时间| t1 | t2 | t3 | t4 | t5 | t6 |
+|-| ----- | ------ | ----- | ------ | ----- | ------ |
+|c1| 获得锁A  | 获得锁B | 获得锁C，C崩溃，没持久化，c1得到反馈已获取到大多数锁门，加锁成功  | C崩溃恢复 |||
+|c2| 获得锁D  | 获得锁E | ...  | ... | 获取C锁成功  ||
+
+解决方案是延迟C的崩溃恢复时间大于锁的过期时间即可
+https://www.cnblogs.com/zhili/p/redLock_DistributedLock.html
