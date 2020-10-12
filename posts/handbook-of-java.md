@@ -505,7 +505,7 @@ redis对比zk，redis不适合做分布式锁，原因有如下
 
 
 - redlock算法问题
-- 需要轮询
+- 需要轮询（即使是redison也是客户端轮询的），zk可以采用watch异步机制
 
 1. 客户端1在Redis的master节点上拿到了锁
 2. Master宕机了，存储锁的key还没有来得及同步到Slave上
@@ -582,5 +582,35 @@ redlock算法过程
 |c1| 获得锁A  | 获得锁B | 获得锁C，C崩溃，没持久化，c1得到反馈已获取到大多数锁门，加锁成功  | C崩溃恢复 |||
 |c2| 获得锁D  | 获得锁E | ...  | ... | 获取C锁成功  ||
 
-解决方案是延迟C的崩溃恢复时间大于锁的过期时间即可
+解决方案是延迟C的崩溃恢复时间大于锁的过期时间即可，或者使用redison的watchdog机制，每10s发送一个延长时间指令，lock线程和watchdog线程同在，崩溃即watchdog线程也会崩溃
 https://www.cnblogs.com/zhili/p/redLock_DistributedLock.html
+
+32. 
+springboot bean替代方案，可以继承CommandLineRunner，在run里面去替代，也可以在BeanPostProcessor里面替代
+
+```
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        if (StringUtils.endsWithIgnoreCase(beanName, targetBeanName)) {
+            boolean containsBean = defaultListableBeanFactory.containsBean(targetBeanName);
+            if (containsBean) {
+                //移除bean的定义和实例
+                defaultListableBeanFactory.removeBeanDefinition(targetBeanName);
+            }
+            //注册新的bean定义和实例
+            defaultListableBeanFactory.registerBeanDefinition(targetBeanName, BeanDefinitionBuilder.genericBeanDefinition(Test55.class).getBeanDefinition());
+            bean = null;
+            return new Test55();
+        }
+        return bean;
+    }
+```
+33. 
+union和union all，前者会去重，后者不会去重
+
+34. 
+一致性哈希为了提高集群的容错性（减节点）和扩展性（加节点），避免需要重新计算所有值的hash，而只需要计算增减那部分节点影响的数据的hash，选择上是选最顺时针最邻近的节点存放，应对节点分布不均匀的问题，可以采用引入虚拟虚拟节点，例如三台服务器，给每台物理服务器后面加编号实现虚拟节点，RedisService1#1，RedisService1#2，RedisService1#3，RedisService2#1，RedisService2#2，RedisService2#3，RedisService3#1，RedisService3#2，RedisService3#3，
+哈希槽的hash计算公式CRC-16(key)%16384，redis主从复制模式可以用来做读写分离，手动故障恢复，sentinel可以用来做自动故障恢复，但两者都可能发生数据丢失，并每台机器存储性能受单机限制，所以redis集群引入了哈希槽解决扩容和单机性能限制问题，最少配置为6台，3主3从，因为判断在线离线也要过大多数投票
+
+参考连接：https://juejin.im/post/6844903750860013576
+
