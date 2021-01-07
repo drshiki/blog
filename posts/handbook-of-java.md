@@ -612,5 +612,7 @@ union和union all，前者会去重，后者不会去重
 一致性哈希为了提高集群的容错性（减节点）和扩展性（加节点），避免需要重新计算所有值的hash，而只需要计算增减那部分节点影响的数据的hash，选择上是选最顺时针最邻近的节点存放，应对节点分布不均匀的问题，可以采用引入虚拟虚拟节点，例如三台服务器，给每台物理服务器后面加编号实现虚拟节点，RedisService1#1，RedisService1#2，RedisService1#3，RedisService2#1，RedisService2#2，RedisService2#3，RedisService3#1，RedisService3#2，RedisService3#3，
 哈希槽的hash计算公式CRC-16(key)%16384，redis主从复制模式可以用来做读写分离，手动故障恢复，sentinel可以用来做自动故障恢复，但两者都可能发生数据丢失，并每台机器存储性能受单机限制，所以redis集群引入了哈希槽解决扩容和单机性能限制问题，最少配置为6台，3主3从，因为判断在线离线也要过大多数投票
 
-参考连接：https://juejin.im/post/6844903750860013576
+参考连接：https://juejin.im/post/6844903750860013576，https://zhuanlan.zhihu.com/p/73807097
 
+35.
+young gc = mirror gc，full gc = major gc
